@@ -3,7 +3,7 @@
           id="canvas"
           canvas-id="canvas"
           :type="is2D?'2d':''"
-          @touchstart="canvasTouch" />
+          @touchstart="canvasTouch"></canvas>
 </template>
 
 <script>
