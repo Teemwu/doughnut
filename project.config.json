@@ -2,7 +2,7 @@
   "miniprogramRoot": "dist/",
   "projectname": "doughnut",
   "description": "A doughnut chart for weapp.",
-  "appid": "wx35f168ffda1aff05",
+  "appid": "wxb36fd88c3e3c996b",
   "setting": {
     "urlCheck": true,
     "es6": false,
@@ -24,7 +24,7 @@
     "lazyloadPlaceholderEnable": false,
     "useMultiFrameRuntime": true,
     "useApiHook": true,
-    "useApiHostProcess": true,
+    "useApiHostProcess": false,
     "babelSetting": {
       "ignore": [],
       "disablePlugins": [],

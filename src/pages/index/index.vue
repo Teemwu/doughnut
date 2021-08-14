@@ -3,7 +3,8 @@
     <Doughnut v-model="ratios"
               :active="activeIndex"
               :is2D="is2D"
-              :duration="800" />
+              :duration="800"
+              :renderText="renderTextHandle" />
   </view>
 </template>
 
@@ -19,6 +20,12 @@ export default {
       ratios: [20, 30, 15, 35],
       activeIndex: 1,
       is2D: true
+    }
+  },
+  methods: {
+    renderTextHandle(index) {
+      const str = 'ABCD'
+      return `${str[index]}:${this.ratios[index]}%`
     }
   },
   created() {
