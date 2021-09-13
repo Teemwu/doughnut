@@ -1,9 +1,9 @@
 <template>
-  <canvas :style="initStyle"
+  <canvas style="width: 200px; height: 200px;"
           id="canvas"
           canvas-id="canvas"
           :type="is2D?'2d':''"
-          @touchstart="canvasTouch"></canvas>
+          @touchstart="canvasTouch" />
 </template>
 
 <script>
@@ -15,18 +15,6 @@ export default {
       type: Array,
       default: () => []
     },
-    width: {
-      type: Number,
-      default: 200
-    },
-    height: {
-      type: Number,
-      default: 200
-    },
-    radius: {
-      type: Number,
-      default: 65
-    },
     active: {
       type: Number,
       default: -1
@@ -34,7 +22,7 @@ export default {
     renderText: Function,
     is2D: {
       type: Boolean,
-      default: /ios|android/.test(getSystemInfoSync().platform)
+      default: false
     },
     border: {
       type: Number,
@@ -63,19 +51,12 @@ export default {
     tipsSize: {
       type: Number,
       default: 8
-    },
-    centerText: {
-      type: String,
-      default: '结果统计'
-    },
-    centerTextSize: {
-      default: Number,
-      default: 16
     }
   },
   data() {
     return {
-      centerPoint: { x: this.width / 2, y: this.height / 2 },
+      r: 65,
+      centerPoint: { x: 100, y: 100 },
       textPoints: [],
       activeIndex: -1,
       angles: [],
@@ -83,14 +64,6 @@ export default {
       canvas: null,
       ctx: null,
       intervel: 16
-    }
-  },
-  computed: {
-    initStyle() {
-      return {
-        width: `${this.width}px`,
-        height: `${this.height}px`
-      }
     }
   },
   watch: {
@@ -146,14 +119,14 @@ export default {
       }
     },
     canvasTouch(e) {
-      const { centerPoint, radius, angles, border, activeIndex } = this
+      const { centerPoint, r, angles, border, activeIndex } = this
       const { x, y } = e.changedTouches[0]
       const { x: _x, y: _y } = centerPoint
       // 两点距离
       const len = Math.sqrt(Math.pow(_y - y, 2) + Math.pow(_x - x, 2))
       const borderHalf = border / 2
       // 是否在弧线内
-      const isInRing = len > radius - borderHalf && len < radius + borderHalf
+      const isInRing = len > r - borderHalf && len < r + borderHalf
       let current = activeIndex
 
       if (isInRing) {
@@ -177,17 +150,16 @@ export default {
       this.init()
     },
     animate() {
-      const { border, is2D, ctx, value, duration, borderBgColor, timer, width, height } = this
+      const { border, is2D, ctx, value, duration, borderBgColor, timer } = this
       if (ctx) {
         if (timer) this.cancelAnimationFrame()
 
         const callback = lastTime => {
-          ctx.clearRect(0, 0, width, height)
+          ctx.clearRect(0, 0, 200, 200)
 
           lastTime = lastTime >= duration ? duration : lastTime
 
           if (lastTime === duration) {
-            // 延迟执行
             this.$nextTick(() => {
               this.cancelAnimationFrame()
               this.activeIndex = this.active
@@ -200,7 +172,6 @@ export default {
 
           this.drawArc(0, 2 * Math.PI, border, borderBgColor)
           this.drawArcs(ratios)
-          this.drawCenter()
 
           if (!is2D) ctx.draw()
 
@@ -214,30 +185,28 @@ export default {
     },
     /**画中心区域 */
     drawCenter() {
-      const { radius, border, centerPoint, ctx } = this
+      const { r, border, is2D, centerPoint, ctx } = this
       const { x, y } = centerPoint
       /**画圆遮挡 */
       ctx.beginPath()
-      ctx.arc(x, y, radius - border / 2, 0, 2 * Math.PI)
+      ctx.arc(x, y, r - border / 2, 0, 2 * Math.PI)
       ctx.fillStyle = '#ffffff'
       ctx.fill()
       ctx.closePath()
-    },
-    drawCenterText() {
-      const { is2D, centerText, centerTextSize, ctx, centerPoint } = this
-      const { x, y } = centerPoint
+
+      const fontSize = 12
 
       if (is2D) {
-        ctx.font = centerTextSize
+        ctx.font = fontSize
         ctx.fillStyle = '#203e62'
       } else {
-        ctx.setFontSize(centerTextSize)
+        ctx.setFontSize(fontSize)
         ctx.setFillStyle('#203e62')
       }
 
       /**画圆中心的文字 */
-      const { width } = ctx.measureText(centerText)
-      ctx.fillText(centerText, x - width / 2, y + centerTextSize / 2)
+      const { width } = ctx.measureText('结果统计')
+      ctx.fillText('结果统计', x - width / 2, y + fontSize / 2)
     },
     /**绘画每段百分比文本 */
     drawText() {
@@ -253,10 +222,10 @@ export default {
 
       textPoints.forEach((item, index) => {
         if (item.value > 0) {
-          const { width } = ctx.measureText(`${item.value}%`)
+          const text = renderText ? renderText(index) : `${item.value}%`
+          const { width } = ctx.measureText(text)
           const x = item.x - width / 2
           const y = item.y + tipsSize / 2
-          const text = renderText ? renderText(index) : `${item.value}%`
 
           ctx.fillText(text, x, y)
         }
@@ -266,18 +235,18 @@ export default {
      * 画弧线
      */
     drawArc(sAngle, eAngle, border, color) {
-      const { radius, centerPoint, ctx } = this
+      const { r, centerPoint, ctx } = this
       const { x, y } = centerPoint
 
       ctx.beginPath()
       ctx.lineWidth = border
       ctx.strokeStyle = color
-      ctx.arc(x, y, radius, sAngle, eAngle, false)
+      ctx.arc(x, y, r, sAngle, eAngle, false)
       ctx.stroke()
       ctx.closePath()
     },
-    drawArcs(ratios, actived) {
-      const { radius, activeIndex, borderColors, border, activeBorder, centerPoint, ctx } = this
+    drawArcs(ratios) {
+      const { r, activeIndex, borderColors, border, activeBorder, centerPoint, ctx } = this
       const { x: _x, y: _y } = centerPoint
       const _angles = []
       const _textPoints = []
@@ -287,7 +256,7 @@ export default {
         const angle = (item * Math.PI) / 50
         const eAngle = sAngle + angle
 
-        const _activeBorder = actived && activeIndex === index && ratios.length > 1 ? (activeBorder - border) * 2 : 0
+        const _activeBorder = activeIndex === index && ratios.length > 1 ? (activeBorder - border) * 2 : 0
         const _border = border + _activeBorder
         const _color = borderColors[index]
 
@@ -296,8 +265,8 @@ export default {
         // 要绘制文本所在点的弧度
         const _angle = sAngle + angle / 2
 
-        const x = _x + radius * Math.cos(_angle)
-        const y = _y + radius * Math.sin(_angle)
+        const x = _x + r * Math.cos(_angle)
+        const y = _y + r * Math.sin(_angle)
 
         _textPoints.push({ x, y, value: item })
         _angles.push(eAngle)
@@ -309,40 +278,37 @@ export default {
       this.textPoints = _textPoints
     },
     init() {
-      const { border, is2D, ctx, value, width, height } = this
-      ctx.clearRect(0, 0, width, height)
-
+      const { border, is2D, ctx, value } = this
+      console.log('value', value)
+      ctx.clearRect(0, 0, 200, 200)
       /**画环形图的背景 */
       this.drawArc(0, 2 * Math.PI, border, '#efefef')
-
-      this.drawArcs(value, true)
-
+      this.drawArcs(value)
       this.drawText()
-
       this.drawCenter()
-
-      this.drawCenterText()
-
       if (!is2D) ctx.draw()
     },
     initCanvas() {
       if (this.is2D) {
-        createSelectorQuery()
-          .select('#canvas')
-          .fields({ node: true, size: true })
-          .exec(res => {
-            const canvas = res[0].node
-            const _ctx = canvas.getContext('2d')
-            const dpr = getSystemInfoSync().pixelRatio
+        nextTick(() => {
+          createSelectorQuery()
+            .select('#canvas')
+            .fields({ node: true, size: true })
+            .exec(res => {
+              const canvas = res[0].node
+              const _ctx = canvas.getContext('2d')
+              const dpr = getSystemInfoSync().pixelRatio
 
-            canvas.width = res[0].width * dpr
-            canvas.height = res[0].height * dpr
-            _ctx.scale(dpr, dpr)
+              canvas.width = res[0].width * dpr
+              canvas.height = res[0].height * dpr
+              
+              _ctx.scale(dpr, dpr)
 
-            this.canvas = canvas
-            this.ctx = _ctx
-            if (_ctx) this.animate()
-          })
+              this.canvas = canvas
+              this.ctx = _ctx
+              if (_ctx) this.animate()
+            })
+        })
       } else {
         this.ctx = createCanvasContext('canvas')
         if (this.ctx) this.animate()
@@ -350,11 +316,7 @@ export default {
     }
   },
   mounted() {
-    // 页面首次渲染完毕时执行 onReady 方法
-    // 而子组件无此方法，要获取渲染层的 DOM 节点
-    // 需要通过 Taro.nextTick 尝试获取
-    // refer:https://taro-docs.jd.com/taro/docs/vue-page#onready-
-    nextTick(() => this.initCanvas())
+    this.initCanvas()
   }
 }
 </script>

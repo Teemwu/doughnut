@@ -1,10 +1,15 @@
 <template>
   <view class="index">
     <Doughnut v-model="ratios"
+              :radius="100"
+              :width="300"
+              :height="300"
               :active="activeIndex"
-              :is2D="is2D"
-              :duration="800"
-              :renderText="renderTextHandle" />
+              :duration="900"
+              :renderText="renderTextHandle"
+              centerText="结果显示"
+              :centerTextSize="14" />
+    <button @tap="changeRatios">动态改变数值</button>
   </view>
 </template>
 
@@ -17,22 +22,19 @@ export default {
   components: { Doughnut },
   data() {
     return {
-      ratios: [20, 30, 15, 35],
-      activeIndex: 1,
-      is2D: true
+      ratios: [1, 49, 15, 35],
+      activeIndex: 1
     }
   },
   methods: {
+    changeRatios() {
+      this.activeIndex = Math.round(Math.random() * 4)
+      this.ratios = [15, 35, 20, 30]
+    },
     renderTextHandle(index) {
       const str = 'ABCD'
       return `${str[index]}:${this.ratios[index]}%`
     }
-  },
-  created() {
-    try {
-      const { platform } = getSystemInfoSync()
-      this.is2D = platform === 'ios' || platform === 'android'
-    } catch (error) {}
   }
 }
 </script>
